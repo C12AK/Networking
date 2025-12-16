@@ -31,7 +31,7 @@ int main(int argc, char *argv[]){
     pid_t pid;
 
     // 创建 socket
-    srv_sock = socket(AF_INET, SOCK_STREAM, 0);     // IPv4，TCP 流式 socket，默认协议
+    srv_sock = socket(PF_INET, SOCK_STREAM, 0);     // IPv4，TCP 流式 socket，默认协议
     if(srv_sock == -1){
         perror("Socket creating failed");
         exit(1);
