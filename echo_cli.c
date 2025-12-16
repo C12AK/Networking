@@ -19,7 +19,7 @@ int main(int argc, char *argv[]){
     int len;
 
     // 创建 socket
-    sock = socket(AF_INET, SOCK_STREAM, 0);
+    sock = socket(PF_INET, SOCK_STREAM, 0);
     if(sock == -1){
         perror("Socket creating failed");
         exit(1);
