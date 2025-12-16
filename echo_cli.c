@@ -43,8 +43,8 @@ int main(int argc, char *argv[]){
         printf("Message to send: ");
         fgets(buf, BUFSZ, stdin);
         if(!strcmp(buf, ".exit\n")) break;
-        write(sock, buf, strlen(buf));
-        len = read(sock, buf, BUFSZ - 1);
+        send(sock, buf, strlen(buf), 0);
+        len = recv(sock, buf, BUFSZ - 1, 0);
         if(len == -1){
             perror("Receiving failed");
             break;
