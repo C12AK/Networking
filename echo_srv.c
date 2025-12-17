@@ -12,7 +12,7 @@
 void handle_client(int cli_sock) {
     char buf[BUFSZ];
     int len;
-    while((len = recv(cli_sock, buf, BUFSZ - 1, 0))){
+    while(len = recv(cli_sock, buf, BUFSZ - 1, 0)){
         send(cli_sock, buf, len, 0);
     }
     close(cli_sock);
