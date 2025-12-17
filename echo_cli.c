@@ -34,6 +34,7 @@ int main(int argc, char *argv[]){
     // 连接到服务器
     if(connect(sock, (struct sockaddr *)&srv_addr, sizeof(srv_addr)) == -1){
         perror("Connecting failed");
+        close(sock);
         exit(1);
     }
     printf("Connected to server %s:%s\n", argv[1], argv[2]);
