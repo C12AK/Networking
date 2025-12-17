@@ -46,12 +46,14 @@ int main(int argc, char *argv[]){
     // 绑定 socket 到地址
     if(bind(srv_sock, (struct sockaddr*)&srv_addr, sizeof(srv_addr)) == -1){
         perror("Binding failed");
+        close(srv_sock);
         exit(1);
     }
 
     // 监听，请求队列最大长度为 5
     if(listen(srv_sock, 5) == -1){
         perror("Listening failed");
+        close(srv_sock);
         exit(1);
     }
     printf("Server started, listening on port %s\n", argv[1]);
