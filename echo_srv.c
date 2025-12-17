@@ -9,14 +9,14 @@
 #define BUFSZ 1024
 
 // 子进程处理客户端连接
-void handle_client(int cli_sock) {
+void handle_client(int cli_sock, struct sockaddr_in cli_addr) {
     char buf[BUFSZ];
     int len;
     while(len = recv(cli_sock, buf, BUFSZ - 1, 0)){
         send(cli_sock, buf, len, 0);
     }
     close(cli_sock);
-    printf("Client connection closed\n");
+    printf("Client connection closed: %s:%d\n", inet_ntoa(cli_addr.sin_addr), ntohs(cli_addr.sin_port));
 }
 
 int main(int argc, char *argv[]){
@@ -46,14 +46,12 @@ int main(int argc, char *argv[]){
     // 绑定 socket 到地址
     if(bind(srv_sock, (struct sockaddr*)&srv_addr, sizeof(srv_addr)) == -1){
         perror("Binding failed");
-        close(srv_sock);
         exit(1);
     }
 
     // 监听，请求队列最大长度为 5
     if(listen(srv_sock, 5) == -1){
         perror("Listening failed");
-        close(srv_sock);
         exit(1);
     }
     printf("Server started, listening on port %s\n", argv[1]);
@@ -82,7 +80,7 @@ int main(int argc, char *argv[]){
         // 子进程的
         if(!pid){
             close(srv_sock);
-            handle_client(cli_sock);
+            handle_client(cli_sock, cli_addr);
             return 0;
         }
 
