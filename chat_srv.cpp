@@ -8,10 +8,26 @@ using namespace std;
 #define BUFSZ 1024
 char buf[BUFSZ];
 vector<int> clis;
+map<string, int> usr2sock;
+map<int, string> sock2usr;
+
+string src, tgt, msg;
+
+inline void split_msg(int len){
+    tgt = msg = "";
+    int tgtlen = 0, i = 0;
+    while(buf[i] != '#' && i < len){
+        tgtlen = tgtlen * 10 + (buf[i] - '0');
+        i++;
+    }
+    i++;
+    while(tgtlen-- && i < len) tgt += buf[i++];
+    while(i < len) msg += buf[i++];
+}
 
 int main(int argc, char *argv[]){
     if(argc != 2){
-        cerr << format("Usage: %s <Port>\n", argv[0]);
+        cerr << format("Usage: {} <Port>\n", argv[0]);
         exit(1);
     }
 
@@ -58,7 +74,13 @@ int main(int argc, char *argv[]){
                 FD_SET(cli_sock, &tot_fds);
                 clis.push_back(cli_sock);
                 mxfd = max(mxfd, cli_sock);
-                cout << "Client connected." << endl;
+
+                // 接收客户端第三个参数（用户名）
+                int len = recv(cli_sock, buf, BUFSZ - 1, 0);
+                buf[len] = '\0';
+                usr2sock[buf] = cli_sock, sock2usr[cli_sock] = buf;
+
+                cout << format("Client connected, username: {}", buf) << endl;
             }
         }
 
@@ -68,24 +90,29 @@ int main(int argc, char *argv[]){
             // 如果当前遍历到的客户端有数据过来
             if(FD_ISSET(u, &fds)){
                 int len = recv(u, buf, BUFSZ - 1, 0);
+                src = sock2usr[u];
 
-                // 这里可以认为掉线。必须带等号
+                // 必须带等号
                 if(len <= 0){
-                    cerr << "Client dropped.\n";
+                    cerr << format("Client {} disconnected.\n", src);
                     close(u);
                     FD_CLR(u, &tot_fds);
+
+                    usr2sock.erase(src), sock2usr.erase(u);
+
                     it = clis.erase(it);
                     it--;
                     continue;
                 }
 
                 buf[len] = '\0';
-                cout << "Received: " << string(buf) << endl;
+                split_msg(len);
+                cout << format("\nFrom: {}\nTo: {}\nContent: {}\n", src, tgt, msg) << endl;
 
-                // 广播给其他客户端
-                for(int &v : clis){
-                    if(v != u) send(v, buf, len, 0);
-                }
+                // 发给对应的客户端，拼接消息：【发件人长度】#【发件人】【消息内容】
+                int v = usr2sock[tgt];
+                msg = to_string(src.length()) + "#" + src + msg;
+                send(v, msg.c_str(), msg.length(), 0);
             }
         }
     }
