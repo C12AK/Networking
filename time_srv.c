@@ -40,7 +40,7 @@ int main(int argc, char *argv[]){
     while(1){
         socklen_t addrlen = sizeof(cli_addr);
 
-        // cli_addr 和 addrlen 一定要引用传参，因为数据报的源地址及其长度会被保存在这两个变量
+        // cli_addr 和 addrlen 传参传的是指针，所以 recvfrom 可以实现将数据报的源地址及其长度被保存在这两个变量
         // 返回值是消息长度
         int msglen = recvfrom(sock, buf, BUFSZ - 1, 0, (struct sockaddr *)&cli_addr, &addrlen);
         if(msglen == -1){
