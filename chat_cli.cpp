@@ -7,11 +7,23 @@ using namespace std;
 
 #define BUFSZ 1024
 char buf[BUFSZ];
-string msg;
+string src, tgt, msg;
+
+inline void split_msg(int len){
+    src = msg = "";
+    int srclen = 0, i = 0;
+    while(buf[i] != '#' && i < len){
+        srclen = srclen * 10 + (buf[i] - '0');
+        i++;
+    }
+    i++;
+    while(srclen-- && i < len) src += buf[i++];
+    while(i < len) msg += buf[i++];
+}
 
 int main(int argc, char *argv[]){
-    if(argc != 3){
-        cerr << format("Usage: {} <Server IP> <Port>\n", argv[0]);
+    if(argc != 4){
+        cerr << format("Usage: {} <Server IP> <Server Port> <Username>\n", argv[0]);
         exit(1);
     }
 
@@ -31,6 +43,11 @@ int main(int argc, char *argv[]){
         exit(1);
     }
     cout << "Connected to server.\n";
+    cout << "Usage: <Target user>(Line 1) + <Message>(Line 2)\n";
+    cout << "Input \".exit\"(without quotes) at any time to exit." << endl;
+
+    // 用户名发给服务器
+    send(sock, argv[3], strlen(argv[3]), 0);
 
     fd_set fds;
     int mxfd = max(sock, fileno(stdin));
@@ -56,16 +73,28 @@ int main(int argc, char *argv[]){
                 break;
             }
             buf[len] = '\0';
-            cout << format("\n> Received:\n> {}\n", buf) << endl;
+            split_msg(len);
+            cout << format("\n> {}:\n> {}\n", src, msg) << endl;
         }
 
         // 如果是键盘有输入
         if(FD_ISSET(fileno(stdin), &fds)){
             if(!getline(cin, msg) || msg == ".exit") break;
-            send(sock, msg.c_str(), msg.size(), 0);
+
+            // 没设收件人则设置
+            if(!tgt.length()) tgt = msg;
+
+            // 否则拼接消息：【收件人长度】#【收件人】【消息内容】
+            else{
+                msg = to_string(tgt.length()) + "#" + tgt + msg;
+                send(sock, msg.c_str(), msg.length(), 0);
+                tgt = "";
+                cout << endl;
+            }
         }
     }
 
     close(sock);
+    cout << "Exited." << endl;
     return 0;
 }
